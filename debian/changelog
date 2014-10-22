@@ -1,49 +1,123 @@
-plymouth (0.8.8-14endless6) eos; urgency=low
+plymouth (0.9.0-7) unstable; urgency=medium
 
+  * Add d/p/libply-splash-core-also-monitor-for-file-removal-in-.patch
+    - Correctly detect the end of coldplugging with udev (>= 213)
+
+ -- Sjoerd Simons <sjoerd@debian.org>  Sun, 10 Aug 2014 10:36:41 +0200
+
+plymouth (0.9.0-6) unstable; urgency=medium
+
+  * New maintainer (Closes: #756075)
+  * Move the frame-buffer and drm renderers into the main plymouth package and
+    always install them in the initramfs, this should fix the issue where the
+    splash is not shown for some users (Closes: #752752)
+  * Move the libply-splash-graphics library to the main package and the themes
+    related .so files to the -themes package, this is effectively killing the
+    -drm package
+  * Add debian/watch file
   * debian/rules:
-    Remove tty overrides.
+    - Tell dh_makeshlibs to exclude plugins from shlibs file
+    - Minimize the runtime dependencies by calling dh_autoreconf with
+      --as-needed and passing the same flag to LDFLAGS
+    - Pass --disable-silent-rules to the configure
+  * debian/control:
+    - Fix short description for plymouth-x11 package to please lintian
+    - Use ${misc:Pre-Depends} instead of hardcoding multiarch-support package
+    - Update the Vcs-* fields
+  * debian/local/plymouth.hook: Always copy text.so and details.so in the
+    initramfs as they are used as fallbacks
+  * Add debian/patches/0009-use-correct-utf8-multibyte-sequence.patch: This
+    should fix the character displayed in the text theme (Closes: #756244)
+  * Add plymouth-{themes,x11}.postrm: Also regenerate the initramfs when these
+    two packages are removed
+  * debian/plymouth.dirs: Create /var/lib/plymouth on installation, this
+    directory is needed to store boot-duration file
+  * debian/plymouth.lintian-overrides: Override
+    init.d-script-depends-on-all-virtual-facility, we really want to be the
+    last to be started so the splash screen stays until the end of the boot
+  * Drop debian/patches/0006-initscript-aliases.patch and use symlinks instead
+    to mask the LSB initscripts
+  * debian/plymouth.postinst, d/p/0010-revert-systemd-wantedby.patch: The
+    WantedBy option in the .service files was useless as they are already
+    statically enabled and has been removed, we also need to cleanup i-s-h
+    related files on upgrade
+  * Add debian/gbp.conf file
 
- -- Cosimo Cecchi <cosimo@endlessm.com>  Fri, 19 Sep 2014 17:42:13 -0700
+ -- Laurent Bigonville <bigon@debian.org>  Wed, 30 Jul 2014 18:08:40 +0200
 
-plymouth (0.8.8-14endless5) unstable; urgency=low
+plymouth (0.9.0-5) unstable; urgency=low
 
-  * debian/patches/endless-no-boot-log.patch:
-    Also don't create an empty boot.log file.
+  * I don't care anymore, not worth it.. orphaning.
 
- -- Cosimo Cecchi <cosimo@endlessm.com>  Thu, 27 Mar 2014 12:02:29 -0700
+ -- Daniel Baumann <mail@daniel-baumann.ch>  Fri, 25 Jul 2014 16:42:29 +0200
 
-plymouth (0.8.8-14endless4) unstable; urgency=low
+plymouth (0.9.0-4) unstable; urgency=low
 
-  * debian/patches/endless-no-boot-log.patch:
-    Don't write boot.log at startup.
+  * Dropping old --disable-libkms and --disable-tests configure flags
+    (Closes: #752802).
+  * Setting no delay for fast booting machines (Closes: #752746).
 
- -- Cosimo Cecchi <cosimo@endlessm.com>  Wed, 26 Mar 2014 19:33:41 -0700
+ -- Daniel Baumann <mail@daniel-baumann.ch>  Thu, 26 Jun 2014 19:45:22 +0200
 
-plymouth (0.8.8-14endless3) eos; urgency=low
+plymouth (0.9.0-3) unstable; urgency=low
 
-  * endless-make-plymouth-show-splash-idempotent.patch
-    Fix bug when "plymouth show-splash" is called several times, as it
-    is during boot. eos-shell #2064.
+  * Dropping drm module in initrd (Closes: #752575).
 
- -- Daniel Drake <drake@endlessm.com>  Mon, 03 Mar 2014 09:48:52 -0600
+ -- Daniel Baumann <mail@daniel-baumann.ch>  Wed, 25 Jun 2014 00:57:49 +0200
 
-plymouth (0.8.8-14endless2) eos; urgency=low
+plymouth (0.9.0-2) unstable; urgency=low
 
-  * debian/patches/endless-main-create-time-directory.patch:
-    Make sure the directory to store boot times is available on runtime.
-    [endlessm/eos-shell#1604]
+  * Adding patch to ignore udev seat tags for the time being (Closes:
+    #751726).
 
- -- Juan A. Suarez Romero <jasuarez@igalia.com>  Fri, 17 Jan 2014 21:12:36 +0100
+ -- Daniel Baumann <mail@daniel-baumann.ch>  Mon, 16 Jun 2014 06:40:49 +0200
 
-plymouth (0.8.8-14endless1) eos; urgency=low
+plymouth (0.9.0-1) unstable; urgency=low
 
-  + endless-simplify-drm-open.patch
-    * Simplify device open, needed for exynos-drm compatibility
-    * https://bugs.freedesktop.org/show_bug.cgi?id=71590
-  + endless-drm-drop-driver-specific-renderers.patch
-    * Prerequisite for the above
+  * Merging upstream version 0.9.0.
+  * Refreshing stderr.patch.
+  * Refreshing default-theme.patch.
+  * Refreshing cmdline.patch.
+  * Removing udevadm.patch, not needed anymore.
+  * Removing deactive.patch, included upstream.
+  * Removing config-parser.patch, included upstream.
+  * Refreshing initscript-aliases.patch.
+  * Renumbering patches.
+  * Adding build-depends to libudev-dev.
+  * Adding build-depends to xsltproc.
+  * Adding build-depends to docbook-xsl.
+  * Ordering removal of unneeded files in rules for more consistency.
+  * Including drm module in initrd, thanks to Lukas Anzinger
+    <l.anzinger@gmail.com> (Closes: #751275).
+  * Adding build-depends to systemd.
+  * Keeping building of static libraries.
+  * Wrapping configure call in rules.
+  * Updating plymouth package contents for new upstream.
 
- -- Daniel Drake <dsd@dsd-ubuntu>  Mon, 25 Nov 2013 14:59:57 -0600
+ -- Daniel Baumann <mail@daniel-baumann.ch>  Sat, 14 Jun 2014 12:48:42 +0200
+
+plymouth (0.8.8-17) unstable; urgency=low
+
+  * Building with dh-autoreconf, thanks to Fernando Seiti Furusato
+    <ferseiti@br.ibm.com> (Closes: #748988).
+
+ -- Daniel Baumann <mail@daniel-baumann.ch>  Sat, 24 May 2014 11:30:48 +0200
+
+plymouth (0.8.8-16) unstable; urgency=low
+
+  * Depending on fonts-dejavu-core alternatively to ttf-dejavu-core
+    (Closes: #743946).
+
+ -- Daniel Baumann <mail@daniel-baumann.ch>  Tue, 08 Apr 2014 22:50:39 +0200
+
+plymouth (0.8.8-15) unstable; urgency=low
+
+  * Updating to standards version 3.9.5.
+  * Correcting initscript-aliases.patch description.
+  * Updating year in copyright file.
+  * Building with dh --parallel.
+
+ -- Daniel Baumann <mail@daniel-baumann.ch>  Mon, 31 Mar 2014 21:23:53 +0200
 
 plymouth (0.8.8-14) experimental; urgency=low
 
