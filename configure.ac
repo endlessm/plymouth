@@ -1,4 +1,4 @@
-AC_INIT([plymouth],[0.8.8],[https://bugs.freedesktop.org/enter_bug.cgi?product=plymouth])
+AC_INIT([plymouth],[0.9.0],[https://bugs.freedesktop.org/enter_bug.cgi?product=plymouth])
 AC_CONFIG_SRCDIR(src/main.c)
 AC_CONFIG_HEADER(config.h)
 AC_CONFIG_AUX_DIR(build-tools)
@@ -6,7 +6,7 @@ AC_CONFIG_AUX_DIR(build-tools)
 AC_USE_SYSTEM_EXTENSIONS
 AC_SYS_LARGEFILE
 AC_PROG_AWK
-AC_PROG_CC
+AC_PROG_CC_STDC
 AM_PROG_CC_C_O
 AC_HEADER_STDC
 AC_C_CONST
@@ -16,7 +16,7 @@ m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 AM_MAINTAINER_MODE([enable])
 
 PKG_PROG_PKG_CONFIG
-LT_INIT
+LT_INIT([dlopen disable-static pic-only])
 
 ## increment if the interface has additions, changes, removals.
 LT_CURRENT=3
@@ -38,11 +38,18 @@ PKG_CHECK_MODULES(IMAGE, [libpng >= 1.2.16 ])
 AC_SUBST(IMAGE_CFLAGS)
 AC_SUBST(IMAGE_LIBS)
 
+PKG_CHECK_MODULES(UDEV, [libudev]);
+AC_SUBST(UDEV_CFLAGS)
+AC_SUBST(UDEV_LIBS)
+
 PLYMOUTH_CFLAGS=""
 PLYMOUTH_LIBS="-lm -lrt -ldl"
 
 AC_SUBST(PLYMOUTH_CFLAGS)
 AC_SUBST(PLYMOUTH_LIBS)
+
+AC_PATH_PROG([SYSTEMD_ASK_PASSWORD_AGENT], [systemd-tty-ask-password-agent])
+AC_PATH_PROG([UDEVADM], [udevadm])
 
 AC_ARG_ENABLE(pango, AS_HELP_STRING([--enable-pango],[enable building with pango, disabled there is no encryption prompts]),enable_pango=$enableval,enable_pango=yes)
 AM_CONDITIONAL(ENABLE_PANGO,  [test "$enable_pango" = yes])
@@ -69,9 +76,23 @@ if test x$enable_drm_renderer = xyes; then
   PKG_CHECK_MODULES(DRM, [libdrm])
 fi
 
-AC_ARG_ENABLE(tests, AS_HELP_STRING([--enable-tests],[build tests]),enable_tests=$enableval,enable_tests=yes)
+AC_ARG_ENABLE(documentation,
+              AS_HELP_STRING([--enable-documentation],
+                             [build documentation]),,
+              enable_documentation=yes)
+if test x$enable_documentation = xyes; then
+   AC_PATH_PROG([XSLTPROC], [xsltproc])
+   if test x$XSLTPROC = x; then
+      AC_MSG_ERROR([xsltproc is required to build documentation])
+   fi
+fi
+AM_CONDITIONAL(BUILD_DOCUMENTATION, test x$enable_documentation = xyes)
 
-AM_CONDITIONAL(ENABLE_TESTS,  [test "$enable_tests" = yes])
+AC_ARG_ENABLE(tracing, AS_HELP_STRING([--enable-tracing],[enable verbose tracing code]),enable_tracing=$enableval,enable_tracing=yes)
+
+if test x$enable_tracing = xyes; then
+  AC_DEFINE(PLY_ENABLE_TRACING, 1, [Build in verbose debug tracing spew])
+fi
 
 AC_ARG_ENABLE(gdm-transition, AS_HELP_STRING([--enable-gdm-transition],[enable smooth transition to gdm]),enable_gdm_transition=$enableval,enable_gdm_transition=no)
 
@@ -101,7 +122,7 @@ AM_CONDITIONAL(ENABLE_SYSTEMD_INTEGRATION, [test "$enable_systemd_integration" =
 
 if test x$enable_systemd_integration = xyes; then
   AC_DEFINE(PLY_ENABLE_SYSTEMD_INTEGRATION, 1, [Coordinate boot up with systemd])
-  SYSTEMD_UNIT_DIR=/lib/systemd/system
+  SYSTEMD_UNIT_DIR=$($PKG_CONFIG --variable=systemdsystemunitdir systemd)
   AC_SUBST(SYSTEMD_UNIT_DIR)
 fi
 
@@ -125,7 +146,7 @@ AS_AC_EXPAND(PLYMOUTH_CLIENT_DIR, $plymouthclientdir)
 AS_AC_EXPAND(PLYMOUTH_DAEMON_DIR, $plymouthdaemondir)
 AS_AC_EXPAND(PLYMOUTH_RUNTIME_DIR, $plymouthruntimedir)
 
-AC_ARG_WITH(rhgb-compat-link, AS_HELP_STRING([--with-rhgb-compat-link],[Install /usr/bin/rhgb-client compatability symlink]),with_rhgb_compat_link=${withval},with_rhgb_compat_link=yes)
+AC_ARG_WITH(rhgb-compat-link, AS_HELP_STRING([--with-rhgb-compat-link],[Install /usr/bin/rhgb-client compatability symlink]),with_rhgb_compat_link=${withval},with_rhgb_compat_link=no)
 AM_CONDITIONAL(WITH_RHGB_COMPAT_LINK,  [test "$with_rhgb_compat_link" = yes])
 
 AC_ARG_WITH(log-viewer, AS_HELP_STRING([--with-log-viewer],[Install plymouth log viewer]),with_log_viewer=${withval},with_log_viewer=no)
@@ -175,7 +196,7 @@ AC_DEFUN([PLYMOUTH_CC_TRY_FLAG], [
   plymouth_save_CFLAGS="$CFLAGS"
   CFLAGS="$CFLAGS $1"
 
-  AC_COMPILE_IFELSE([ ], [plymouth_cc_flag=yes], [plymouth_cc_flag=no])
+  AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[ ]], [[ ]])], [plymouth_cc_flag=yes], [plymouth_cc_flag=no])
   CFLAGS="$plymouth_save_CFLAGS"
 
   if test "x$plymouth_cc_flag" = "xyes"; then
@@ -204,7 +225,7 @@ if test "$GCC" = "yes" -a "$set_more_warnings" != "no"; then
    -Wchar-subscripts -Wmissing-declarations -Wmissing-prototypes \
    -Wwrite-strings -Wnested-externs -Wpointer-arith \
    -Wswitch-enum -Wstrict-aliasing=2 -Winit-self -Wunsafe-loop-optimizations \
-   -Wno-missing-field-initializers -Wno-unused-parameter \
+   -Wno-missing-field-initializers -Wno-unused-parameter -Wno-unused-result \
    -Wcast-align -Wsign-compare -Wp,-D_FORTIFY_SOURCE=2"
 elif test "$GCC" = "yes"; then
   AC_MSG_RESULT(no)
@@ -274,6 +295,7 @@ AC_CONFIG_FILES([Makefile
            src/plugins/splash/Makefile
            src/plugins/splash/throbgress/Makefile
            src/plugins/splash/fade-throbber/Makefile
+           src/plugins/splash/tribar/Makefile
            src/plugins/splash/text/Makefile
            src/plugins/splash/details/Makefile
            src/plugins/splash/space-flares/Makefile
@@ -286,12 +308,10 @@ AC_CONFIG_FILES([Makefile
            src/client/Makefile
            src/viewer/Makefile
            src/upstart-bridge/Makefile
-           src/tests/Makefile
-           src/libply/tests/Makefile
-           src/client/tests/Makefile
            themes/Makefile
            themes/spinfinity/Makefile
            themes/fade-in/Makefile
+           themes/tribar/Makefile
            themes/text/Makefile
            themes/details/Makefile
            themes/solar/Makefile
