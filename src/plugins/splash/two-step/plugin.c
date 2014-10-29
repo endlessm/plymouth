@@ -267,7 +267,10 @@ view_load (view_t *view)
 
         ply_trace ("loading entry");
         if (!ply_entry_load (view->entry))
-                return false;
+        {
+                ply_entry_free (view->entry);
+                view->entry = NULL;
+        }
 
         view_load_end_animation (view);
 
@@ -404,6 +407,12 @@ view_start_end_animation (view_t        *view,
         long width, height;
         unsigned long screen_width, screen_height;
 
+        if (view->end_animation == NULL)
+        {
+                ply_trigger_pull (trigger, NULL);
+                return;
+        }
+
         plugin = view->plugin;
 
         screen_width = ply_pixel_display_get_width (view->display);
@@ -490,6 +499,9 @@ view_show_prompt (view_t     *view,
 
         assert (view != NULL);
 
+        if (view->entry == NULL)
+                return;
+
         plugin = view->plugin;
 
         screen_width = ply_pixel_display_get_width (view->display);
@@ -535,6 +547,9 @@ static void
 view_hide_prompt (view_t *view)
 {
         assert (view != NULL);
+
+        if (view->entry == NULL)
+                 return;
 
         ply_entry_hide (view->entry);
         ply_label_hide (view->label);
@@ -948,7 +963,7 @@ on_draw (view_t             *view,
                         ply_progress_animation_draw_area (view->progress_animation,
                                                           pixel_buffer,
                                                           x, y, width, height);
-                } else if (!ply_animation_is_stopped (view->end_animation)) {
+                } else if (view->end_animation != NULL && !ply_animation_is_stopped (view->end_animation)) {
                         ply_animation_draw_area (view->end_animation,
                                                  pixel_buffer,
                                                  x, y, width, height);
@@ -1048,13 +1063,25 @@ show_splash_screen (ply_boot_splash_plugin_t *plugin,
         plugin->loop = loop;
         plugin->mode = mode;
 
-        ply_trace ("loading lock image");
-        if (!ply_image_load (plugin->lock_image))
-                return false;
+        if (plugin->lock_image != NULL)
+        {
+                ply_trace ("loading lock image");
+                if (!ply_image_load (plugin->lock_image))
+                {
+                        ply_image_free (plugin->lock_image);
+                        plugin->lock_image = NULL;
+                }
+        }
 
-        ply_trace ("loading box image");
-        if (!ply_image_load (plugin->box_image))
-                return false;
+        if (plugin->box_image != NULL)
+        {
+                ply_trace ("loading box image");
+                if (!ply_image_load (plugin->box_image))
+                {
+                        ply_image_free (plugin->box_image);
+                        plugin->box_image = NULL;
+                }
+        }
 
         if (plugin->corner_image != NULL) {
                 ply_trace ("loading corner image");
@@ -1390,6 +1417,9 @@ display_question (ply_boot_splash_plugin_t *plugin,
                   const char               *prompt,
                   const char               *entry_text)
 {
+        if (plugin->box_image == NULL)
+                return;
+
         pause_views (plugin);
         if (plugin->state == PLY_BOOT_SPLASH_DISPLAY_NORMAL)
                 stop_animation (plugin, NULL);
@@ -1404,6 +1434,9 @@ static void
 display_message (ply_boot_splash_plugin_t *plugin,
                  const char               *message)
 {
+        if (plugin->box_image == NULL)
+                return;
+
         show_message (plugin, message);
 }
 
