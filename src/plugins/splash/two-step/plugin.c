@@ -215,7 +215,10 @@ view_load (view_t *view)
 
   ply_trace ("loading entry");
   if (!ply_entry_load (view->entry))
-    return false;
+    {
+      ply_entry_free (view->entry);
+      view->entry = NULL;
+    }
 
   ply_trace ("loading animation");
   if (!ply_animation_load (view->end_animation))
@@ -231,7 +234,6 @@ view_load (view_t *view)
       if (!ply_animation_load (view->end_animation))
         {
           ply_trace ("old naming scheme didn't work either");
-          return false;
         }
 
       ply_throbber_free (view->throbber);
@@ -464,6 +466,9 @@ view_show_prompt (view_t     *view,
 
   assert (view != NULL);
 
+  if (view->entry == NULL)
+    return;
+
   plugin = view->plugin;
 
   screen_width = ply_pixel_display_get_width (view->display);
@@ -511,6 +516,9 @@ static void
 view_hide_prompt (view_t *view)
 {
   assert (view != NULL);
+
+  if (view->entry == NULL)
+    return;
 
   ply_entry_hide (view->entry);
   ply_label_hide (view->label);
@@ -1041,13 +1049,27 @@ show_splash_screen (ply_boot_splash_plugin_t *plugin,
   plugin->loop = loop;
   plugin->mode = mode;
 
-  ply_trace ("loading lock image");
-  if (!ply_image_load (plugin->lock_image))
-    return false;
+  if (plugin->lock_image != NULL)
+    {
+      ply_trace ("loading lock image");
 
-  ply_trace ("loading box image");
-  if (!ply_image_load (plugin->box_image))
-    return false;
+      if (!ply_image_load (plugin->lock_image))
+        {
+          ply_image_free (plugin->lock_image);
+          plugin->lock_image = NULL;
+        }
+    }
+
+  if (plugin->box_image != NULL)
+    {
+      ply_trace ("loading box image");
+
+      if (!ply_image_load (plugin->box_image))
+        {
+          ply_image_free (plugin->box_image);
+          plugin->box_image = NULL;
+        }
+    }
 
   if (plugin->corner_image != NULL)
     {
@@ -1409,6 +1431,9 @@ display_question (ply_boot_splash_plugin_t *plugin,
                   const char               *prompt,
                   const char               *entry_text)
 {
+  if (plugin->box_image == NULL)
+    return;
+
   pause_views (plugin);
   if (plugin->state == PLY_BOOT_SPLASH_DISPLAY_NORMAL)
     stop_animation (plugin, NULL);
@@ -1423,6 +1448,9 @@ static void
 display_message (ply_boot_splash_plugin_t *plugin,
                  const char               *message)
 {
+  if (plugin->box_image == NULL)
+    return;
+
   show_message (plugin, message);
 }
 
