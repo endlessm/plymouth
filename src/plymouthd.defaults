@@ -1,5 +1,5 @@
 # Distribution defaults. Changes to this file will get overwritten during
 # upgrades.
 [Daemon]
-Theme=endlessos
+Theme=endlessos-static
 ShowDelay=0
