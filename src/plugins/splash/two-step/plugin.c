@@ -231,13 +231,18 @@ view_load (view_t *view)
       ply_animation_free (view->end_animation);
       view->end_animation = ply_animation_new (view->plugin->animation_dir,
                                                "throbber-");
-      if (!ply_animation_load (view->end_animation))
+      if (ply_animation_load (view->end_animation))
+        {
+          /* The end animation takes over the throbber. */
+          ply_throbber_free (view->throbber);
+          view->throbber = NULL;
+        }
+      else
         {
           ply_trace ("old naming scheme didn't work either");
+          ply_animation_free (view->end_animation);
+          view->end_animation = NULL;
         }
-
-      ply_throbber_free (view->throbber);
-      view->throbber = NULL;
     }
 
   ply_trace ("loading progress animation");
@@ -951,7 +956,7 @@ on_draw (view_t                   *view,
                                             pixel_buffer,
                                             x, y, width, height);
         }
-      else if (!ply_animation_is_stopped (view->end_animation))
+      else if (view->end_animation != NULL && !ply_animation_is_stopped (view->end_animation))
         ply_animation_draw_area (view->end_animation,
                                  pixel_buffer,
                                  x, y, width, height);
