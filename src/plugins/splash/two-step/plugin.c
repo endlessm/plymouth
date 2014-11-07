@@ -383,6 +383,12 @@ view_start_end_animation (view_t        *view,
   long width, height;
   unsigned long screen_width, screen_height;
 
+  if (view->end_animation == NULL)
+    {
+      ply_trigger_pull (trigger, NULL);
+      return;
+    }
+
   plugin = view->plugin;
 
   screen_width = ply_pixel_display_get_width (view->display);
