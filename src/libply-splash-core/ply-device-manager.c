@@ -91,6 +91,18 @@ static bool
 device_is_for_local_console (ply_device_manager_t *manager,
                              struct udev_device   *device)
 {
+  /* HACK: The code below relies on the PCI property "boot_vga"
+   * exposed by the kernel. On ARM systems without PCI, the code will
+   * cause no terminal to be found and plymouth to segfault. The code
+   * upstream is going to be rewritten at some point later, but for
+   * now, just accept the first DRM device we see, as we'll only ever
+   * have one.
+   *
+   * See: https://bugs.freedesktop.org/show_bug.cgi?id=80553
+   */
+  return true;
+
+#if 0
   const char *device_path;
   struct udev_device *bus_device;
   char *bus_device_path;
@@ -112,6 +124,7 @@ device_is_for_local_console (ply_device_manager_t *manager,
     for_local_console = false;
 
   return for_local_console;
+#endif
 }
 
 static bool
