@@ -173,6 +173,7 @@ struct _ply_boot_splash_plugin
         uint32_t                            progress_bar_bg_color;
         uint32_t                            progress_bar_fg_color;
 
+        double                              show_animation_fraction;
         progress_function_t                 progress_function;
 
         ply_trigger_t                      *idle_trigger;
@@ -1034,6 +1035,7 @@ create_plugin (ply_key_file_t *key_file)
         char *image_dir, *image_path;
         char *transition;
         char *progress_function;
+        char *show_animation_fraction;
 
         srand ((int) ply_get_timestamp ());
         plugin = calloc (1, sizeof(ply_boot_splash_plugin_t));
@@ -1189,6 +1191,13 @@ create_plugin (ply_key_file_t *key_file)
 
                 free (progress_function);
         }
+
+        show_animation_fraction = ply_key_file_get_value (key_file, "two-step", "ShowAnimationPercent");
+        if (show_animation_fraction != NULL)
+                plugin->show_animation_fraction = strtod (show_animation_fraction, NULL);
+        else
+                plugin->show_animation_fraction = SHOW_ANIMATION_FRACTION;
+        free (show_animation_fraction);
 
         plugin->views = ply_list_new ();
 
@@ -1772,7 +1781,7 @@ on_boot_progress (ply_boot_splash_plugin_t *plugin,
          * become_idle gets called.
          */
         if (plugin->mode_settings[plugin->mode].use_end_animation &&
-            fraction_done >= SHOW_ANIMATION_FRACTION) {
+            fraction_done >= plugin->show_animation_fraction) {
                 if (plugin->stop_trigger == NULL) {
                         ply_trace ("boot progressed to end");
 
@@ -1786,7 +1795,7 @@ on_boot_progress (ply_boot_splash_plugin_t *plugin,
         } else {
                 double total_duration;
 
-                fraction_done *= (1 / SHOW_ANIMATION_FRACTION);
+                fraction_done *= (1 / plugin->show_animation_fraction);
 
                 switch (plugin->progress_function) {
                 /* Fun made-up smoothing function to make the growth asymptotic:
