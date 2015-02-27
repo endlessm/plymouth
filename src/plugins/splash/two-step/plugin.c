@@ -64,10 +64,6 @@
 #define FRAMES_PER_SECOND 30
 #endif
 
-#ifndef SHOW_ANIMATION_PERCENT
-#define SHOW_ANIMATION_PERCENT 0.9
-#endif
-
 typedef enum
 {
         PLY_BOOT_SPLASH_DISPLAY_NORMAL,
@@ -123,6 +119,7 @@ struct _ply_boot_splash_plugin
         uint32_t                            background_start_color;
         uint32_t                            background_end_color;
 
+        double                              show_animation_percent;
         progress_function_t                 progress_function;
 
         ply_trigger_t                      *idle_trigger;
@@ -565,6 +562,7 @@ create_plugin (ply_key_file_t *key_file)
         char *transition_duration;
         char *color;
         char *progress_function;
+        char *show_animation_percent;
 
         srand ((int) ply_get_timestamp ());
         plugin = calloc (1, sizeof(ply_boot_splash_plugin_t));
@@ -680,6 +678,13 @@ create_plugin (ply_key_file_t *key_file)
 
                 free (progress_function);
         }
+
+        show_animation_percent = ply_key_file_get_value (key_file, "two-step", "ShowAnimationPercent");
+        if (show_animation_percent != NULL)
+                plugin->show_animation_percent = strtod (show_animation_percent, NULL);
+        else
+                plugin->show_animation_percent = .9;
+        free (show_animation_percent);
 
         plugin->views = ply_list_new ();
 
@@ -1187,7 +1192,7 @@ on_boot_progress (ply_boot_splash_plugin_t *plugin,
         if (plugin->is_idle)
                 return;
 
-        if (percent_done >= SHOW_ANIMATION_PERCENT) {
+        if (percent_done >= plugin->show_animation_percent) {
                 if (plugin->stop_trigger == NULL) {
                         ply_trace ("boot progressed to end");
 
@@ -1201,7 +1206,7 @@ on_boot_progress (ply_boot_splash_plugin_t *plugin,
         } else {
                 double total_duration;
 
-                percent_done *= (1 / SHOW_ANIMATION_PERCENT);
+                percent_done *= (1 / plugin->show_animation_percent);
 
                 switch (plugin->progress_function) {
                 /* Fun made-up smoothing function to make the growth asymptotic:
