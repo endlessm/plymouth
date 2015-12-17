@@ -347,6 +347,7 @@ AC_CONFIG_FILES([Makefile po/Makefile.in
            systemd-units/plymouth-switch-root-initramfs.service
            systemd-units/systemd-ask-password-plymouth.path
            systemd-units/systemd-ask-password-plymouth.service
+           systemd-units/plymouth-poweroff.sh
            systemd-units/Makefile
            docs/Makefile
 ])
