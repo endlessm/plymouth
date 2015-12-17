@@ -1,0 +1,5 @@
+#!/bin/bash
+
+if [ "$1" = "poweroff" ]; then
+	@PLYMOUTH_CLIENT_DIR@/plymouth quit --retain-splash
+fi
