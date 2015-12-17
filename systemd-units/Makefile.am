@@ -15,6 +15,11 @@ if ENABLE_SYSTEMD_INTEGRATION
 systemdunitdir=$(SYSTEMD_UNIT_DIR)
 systemdunit_DATA = $(systemd_unit_templates:.in=)
 
+systemdpoweroff_template = plymouth-poweroff.sh.in
+
+systemdpoweroffdir=$(SYSTEMD_UNIT_DIR)/../system-shutdown/
+systemdpoweroff_SCRIPTS = $(systemdpoweroff_template:.in=)
+
 install-data-hook:
 	$(MKDIR_P) -m 0755                                                   \
 		$(DESTDIR)$(SYSTEMD_UNIT_DIR)/initrd-switch-root.target.wants\
@@ -74,5 +79,5 @@ uninstall-hook:
 
 endif
 
-EXTRA_DIST = $(systemd_unit_templates) $(systemdunit_DATA)
+EXTRA_DIST = $(systemd_unit_templates) $(systemdunit_DATA) $(systemdpoweroff_template) $(systemdpoweroff_DATA)
 DISTCLEANFILES=$(systemdunit_DATA)
