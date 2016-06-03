@@ -71,6 +71,8 @@ struct _ply_device_manager
         uint32_t                    local_console_managed : 1;
         uint32_t                    local_console_is_text : 1;
         uint32_t                    serial_consoles_detected : 1;
+        uint32_t                    renderers_activated : 1;
+        uint32_t                    keyboards_activated : 1;
 };
 
 static void
@@ -420,6 +422,10 @@ get_terminal (ply_device_manager_t *manager,
             strcmp (full_name, "/dev/tty") == 0 ||
             strcmp (full_name, ply_terminal_get_name (manager->local_console_terminal)) == 0) {
                 terminal = manager->local_console_terminal;
+
+                ply_hashtable_insert (manager->terminals,
+                                      (void *) ply_terminal_get_name (terminal),
+                                      terminal);
                 goto done;
         }
 
@@ -466,9 +472,6 @@ ply_device_manager_new (const char                *default_tty,
         manager->terminals = ply_hashtable_new (ply_hashtable_string_hash, ply_hashtable_string_compare);
         manager->renderers = ply_hashtable_new (ply_hashtable_string_hash, ply_hashtable_string_compare);
         manager->local_console_terminal = ply_terminal_new (default_tty);
-        ply_hashtable_insert (manager->terminals,
-                              (void *) ply_terminal_get_name (manager->local_console_terminal),
-                              manager->local_console_terminal);
         manager->keyboards = ply_list_new ();
         manager->text_displays = ply_list_new ();
         manager->pixel_displays = ply_list_new ();
@@ -681,6 +684,12 @@ create_devices_for_terminal_and_renderer_type (ply_device_manager_t *manager,
 
                 create_pixel_displays_for_renderer (manager, renderer);
                 ply_hashtable_insert (manager->renderers, strdup (device_path), renderer);
+                create_pixel_displays_for_renderer (manager, renderer);
+
+                if (manager->renderers_activated) {
+                        ply_trace ("activating renderer");
+                        ply_renderer_activate (renderer);
+                }
         } else if (terminal != NULL) {
                 keyboard = ply_keyboard_new_for_terminal (terminal);
                 ply_list_append_data (manager->keyboards, keyboard);
@@ -698,7 +707,8 @@ create_devices_for_terminal_and_renderer_type (ply_device_manager_t *manager,
                 }
         }
 
-        if (keyboard != NULL) {
+        if (keyboard != NULL && manager->keyboards_activated) {
+                ply_trace ("activating keyboards");
                 ply_keyboard_watch_for_input (keyboard);
         }
 }
@@ -864,6 +874,8 @@ ply_device_manager_activate_renderers (ply_device_manager_t *manager)
                                (ply_hashtable_foreach_func_t *)
                                activate_renderer,
                                manager);
+
+        manager->renderers_activated = true;
 }
 
 static void
@@ -881,6 +893,8 @@ ply_device_manager_deactivate_renderers (ply_device_manager_t *manager)
                                (ply_hashtable_foreach_func_t *)
                                deactivate_renderer,
                                manager);
+
+        manager->renderers_activated = false;
 }
 
 void
@@ -901,6 +915,8 @@ ply_device_manager_activate_keyboards (ply_device_manager_t *manager)
 
                 node = next_node;
         }
+
+        manager->keyboards_activated = true;
 }
 
 void
@@ -921,4 +937,6 @@ ply_device_manager_deactivate_keyboards (ply_device_manager_t *manager)
 
                 node = next_node;
         }
+
+        manager->keyboards_activated = false;
 }
