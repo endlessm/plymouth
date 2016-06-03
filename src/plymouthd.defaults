@@ -3,4 +3,4 @@
 [Daemon]
 Theme=endlessos-squiggly
 ShowDelay=0
-DeviceTimeout=8
+DeviceTimeout=30
