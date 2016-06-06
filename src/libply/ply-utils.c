@@ -865,6 +865,8 @@ ply_get_device_scale (uint32_t width,
         double dpi_x, dpi_y;
         const char *force_device_scale;
 
+        return 1;
+
         device_scale = 1;
 
         if ((force_device_scale = getenv ("PLYMOUTH_FORCE_SCALE")))
