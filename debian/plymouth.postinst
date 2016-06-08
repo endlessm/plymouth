@@ -10,7 +10,8 @@ case "${1}" in
 		# The option has been removed but we still need to take care of
 		# removing the leftover.
 		if dpkg --compare-versions "$2" le-nl "0.9.0-6~"; then
-			deb-systemd-helper purge plymouth-halt.service plymouth-kexec.service plymouth-poweroff.service plymouth-quit.service plymouth-quit-wait.service plymouth-read-write.service plymouth-reboot.service plymouth-start.service >/dev/null
+			export _DEB_SYSTEMD_HELPER_PURGE=1
+			deb-systemd-helper disable plymouth-halt.service plymouth-kexec.service plymouth-poweroff.service plymouth-quit.service plymouth-quit-wait.service plymouth-read-write.service plymouth-reboot.service plymouth-start.service >/dev/null
 			deb-systemd-helper unmask plymouth-halt.service plymouth-kexec.service plymouth-poweroff.service plymouth-quit.service plymouth-quit-wait.service plymouth-read-write.service plymouth-reboot.service plymouth-start.service >/dev/null
 		fi
 		if [ -x /usr/sbin/update-initramfs ]
