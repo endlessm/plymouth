@@ -309,8 +309,16 @@ load_settings (state_t    *state,
                 goto out;
 
         asprintf (theme_path,
-                  PLYMOUTH_THEME_PATH "%s/%s.plymouth",
+                  PLYMOUTH_RUNTIME_THEME_PATH "%s/%s.plymouth",
                   splash_string, splash_string);
+        ply_trace ("Checking if %s exists", *theme_path);
+        if (!ply_file_exists (*theme_path)) {
+                ply_trace ("%s not found, fallbacking to " PLYMOUTH_THEME_PATH,
+                           *theme_path);
+                asprintf (theme_path,
+                          PLYMOUTH_THEME_PATH "%s/%s.plymouth",
+                          splash_string, splash_string);
+        }
 
         if (isnan (state->splash_delay)) {
                 const char *delay_string;
@@ -417,8 +425,16 @@ find_override_splash (state_t *state)
                 ply_trace ("Splash is configured to be '%*.*s'", length, length, splash_string);
 
                 asprintf (&state->override_splash_path,
-                          PLYMOUTH_THEME_PATH "%*.*s/%*.*s.plymouth",
+                          PLYMOUTH_RUNTIME_THEME_PATH "%*.*s/%*.*s.plymouth",
                           length, length, splash_string, length, length, splash_string);
+                ply_trace ("Checking if %s exists", state->override_splash_path);
+                if (!ply_file_exists (state->override_splash_path)) {
+                        ply_trace ("%s not found, fallbacking to " PLYMOUTH_THEME_PATH,
+                                   state->override_splash_path);
+                        asprintf (&state->override_splash_path,
+                                  PLYMOUTH_THEME_PATH "%*.*s/%*.*s.plymouth",
+                                  length, length, splash_string, length, length, splash_string);
+                }
         }
 
         if (isnan (state->splash_delay)) {
@@ -451,9 +467,12 @@ find_distribution_default_splash (state_t *state)
         if (state->distribution_default_splash_path != NULL)
                 return;
 
-        if (!load_settings (state, PLYMOUTH_POLICY_DIR "plymouthd.defaults", &state->distribution_default_splash_path)) {
-                ply_trace ("failed to load " PLYMOUTH_POLICY_DIR "plymouthd.defaults");
-                return;
+        if (!load_settings (state, PLYMOUTH_RUNTIME_DIR "/plymouthd.defaults", &state->distribution_default_splash_path)) {
+                ply_trace ("failed to load " PLYMOUTH_RUNTIME_DIR "/plymouthd.defaults, trying " PLYMOUTH_POLICY_DIR);
+                if (!load_settings (state, PLYMOUTH_POLICY_DIR "plymouthd.defaults", &state->distribution_default_splash_path)) {
+                        ply_trace ("failed to load " PLYMOUTH_POLICY_DIR "plymouthd.defaults");
+                        return;
+                }
         }
 
         ply_trace ("Distribution default theme file is '%s'", state->distribution_default_splash_path);
