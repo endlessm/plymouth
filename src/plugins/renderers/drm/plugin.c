@@ -78,6 +78,13 @@ struct _ply_renderer_head
         uint32_t                encoder_id;
         uint32_t                console_buffer_id;
         uint32_t                scan_out_buffer_id;
+
+        int                     gamma_size;
+
+        uint16_t                *clut_r;
+        uint16_t                *clut_g;
+        uint16_t                *clut_b;
+
 };
 
 struct _ply_renderer_input_source
@@ -402,6 +409,8 @@ ply_renderer_head_new (ply_renderer_backend_t *backend,
 {
         ply_renderer_head_t *head;
         drmModeModeInfo *mode;
+        drmModeCrtc *controller;
+        int ret;
 
         head = calloc (1, sizeof(ply_renderer_head_t));
 
@@ -416,6 +425,24 @@ ply_renderer_head_new (ply_renderer_backend_t *backend,
 
         head->connector0 = connector;
         head->connector0_mode_index = connector_mode_index;
+
+        controller = drmModeGetCrtc (backend->device_fd, head->controller_id);
+        assert (controller->gamma_size != 0);
+
+        head->gamma_size = controller->gamma_size;
+
+        ply_trace ("gamma size: %d", head->gamma_size);
+
+        head->clut_r = calloc (1, head->gamma_size * sizeof(uint16_t));
+        head->clut_g = calloc (1, head->gamma_size * sizeof(uint16_t));
+        head->clut_b = calloc (1, head->gamma_size * sizeof(uint16_t));
+
+        ret = drmModeCrtcGetGamma(backend->device_fd, controller_id, head->gamma_size,
+                                  head->clut_r, head->clut_g, head->clut_b);
+        if (ret)
+                ply_trace ("Failed to get gamma");
+
+        drmModeFreeCrtc (controller);
 
         head->area.x = 0;
         head->area.y = 0;
@@ -458,6 +485,7 @@ ply_renderer_head_set_scan_out_buffer (ply_renderer_backend_t *backend,
         drmModeModeInfo *mode;
         uint32_t *connector_ids;
         int number_of_connectors;
+        int ret;
 
         connector_ids = (uint32_t *) ply_array_get_uint32_elements (head->connector_ids);
         number_of_connectors = ply_array_get_size (head->connector_ids);
@@ -466,6 +494,11 @@ ply_renderer_head_set_scan_out_buffer (ply_renderer_backend_t *backend,
 
         ply_trace ("Setting scan out buffer of %ldx%ld head to our buffer",
                    head->area.width, head->area.height);
+
+        ret = drmModeCrtcSetGamma (backend->device_fd, head->controller_id, head->gamma_size,
+                                   head->clut_r, head->clut_g, head->clut_b);
+        if (ret)
+                ply_trace ("Failed to set gamma");
 
         /* Tell the controller to use the allocated scan out buffer on each connectors
          */
