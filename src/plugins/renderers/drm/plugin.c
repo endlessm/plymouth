@@ -450,14 +450,52 @@ ply_renderer_head_free (ply_renderer_head_t *head)
         free (head);
 }
 
+static void
+ply_gamma_linear (uint16_t *table, int size)
+{
+        int i;
+        for (i = 0; i < size; i++) {
+                float v = (float) (i) / (float) (size - 1);
+                v *= 65535.0f;
+                table[i] = (uint16_t) v;
+        }
+}
+
+static int
+ply_set_gamma (ply_renderer_backend_t *backend,
+               ply_renderer_head_t    *head,
+               int                     gamma_size)
+{
+        int ret;
+        uint16_t *r, *g, *b;
+
+        r = calloc (gamma_size, sizeof(*r));
+        g = calloc (gamma_size, sizeof(*g));
+        b = calloc (gamma_size, sizeof(*b));
+
+        ply_gamma_linear (r, gamma_size);
+        ply_gamma_linear (g, gamma_size);
+        ply_gamma_linear (b, gamma_size);
+
+        ret = drmModeCrtcSetGamma(backend->device_fd, head->controller_id, gamma_size, r, g, b);
+
+        free(r);
+        free(g);
+        free(b);
+
+        return ret;
+}
+
 static bool
 ply_renderer_head_set_scan_out_buffer (ply_renderer_backend_t *backend,
                                        ply_renderer_head_t    *head,
                                        uint32_t                buffer_id)
 {
         drmModeModeInfo *mode;
+        drmModeCrtc *controller;
         uint32_t *connector_ids;
         int number_of_connectors;
+        int gamma_size;
 
         connector_ids = (uint32_t *) ply_array_get_uint32_elements (head->connector_ids);
         number_of_connectors = ply_array_get_size (head->connector_ids);
@@ -466,6 +504,27 @@ ply_renderer_head_set_scan_out_buffer (ply_renderer_backend_t *backend,
 
         ply_trace ("Setting scan out buffer of %ldx%ld head to our buffer",
                    head->area.width, head->area.height);
+
+        controller = drmModeGetCrtc (backend->device_fd, head->controller_id);
+
+        if (controller == NULL) {
+                ply_trace ("Couldn't find CRTC");
+                return false;
+        }
+
+        gamma_size = controller->gamma_size;
+        drmModeFreeCrtc(controller);
+
+        if (gamma_size) {
+                if (ply_set_gamma (backend, head, gamma_size)) {
+                        ply_trace ("Couldn't set gamma");
+                        return false;
+                }
+
+                ply_trace ("gamma size: %d\n", gamma_size);
+        } else {
+                ply_trace ("CRTC has no gamma table");
+        }
 
         /* Tell the controller to use the allocated scan out buffer on each connectors
          */
