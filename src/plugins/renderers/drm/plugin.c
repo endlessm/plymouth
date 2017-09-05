@@ -495,7 +495,6 @@ ply_renderer_head_set_scan_out_buffer (ply_renderer_backend_t *backend,
         drmModeCrtc *controller;
         uint32_t *connector_ids;
         int number_of_connectors;
-        int gamma_size;
 
         connector_ids = (uint32_t *) ply_array_get_uint32_elements (head->connector_ids);
         number_of_connectors = ply_array_get_size (head->connector_ids);
@@ -509,21 +508,21 @@ ply_renderer_head_set_scan_out_buffer (ply_renderer_backend_t *backend,
 
         if (controller == NULL) {
                 ply_trace ("Couldn't find CRTC");
-                return false;
-        }
-
-        gamma_size = controller->gamma_size;
-        drmModeFreeCrtc(controller);
-
-        if (gamma_size) {
-                if (ply_set_gamma (backend, head, gamma_size)) {
-                        ply_trace ("Couldn't set gamma");
-                        return false;
-                }
-
-                ply_trace ("gamma size: %d\n", gamma_size);
         } else {
-                ply_trace ("CRTC has no gamma table");
+                int gamma_size;
+
+                gamma_size = controller->gamma_size;
+                drmModeFreeCrtc(controller);
+
+                if (gamma_size) {
+                        if (ply_set_gamma (backend, head, gamma_size)) {
+                                ply_trace ("Couldn't set gamma");
+                        } else {
+                                ply_trace ("gamma size: %d\n", gamma_size);
+                        }
+                } else {
+                        ply_trace ("CRTC has no gamma table");
+                }
         }
 
         /* Tell the controller to use the allocated scan out buffer on each connectors
