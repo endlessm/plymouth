@@ -62,7 +62,6 @@ override_dh_install:
 	# Adding other debian specific files
 	install -D -m 0644 debian/local/debian-logo.png debian/plymouth/usr/share/plymouth/debian-logo.png
 	install -D -m 0755 debian/local/plymouth-update-initrd debian/plymouth/usr/lib/$(DEB_HOST_MULTIARCH)/plymouth/plymouth-update-initrd
-	install -D -m 0644 debian/local/plymouth.lsb debian/plymouth/lib/lsb/init-functions.d/99-plymouth
 
 	# Adding apport file (from Ubuntu)
 	mkdir -p debian/plymouth/usr/share/apport/package-hooks
@@ -73,10 +72,6 @@ override_dh_systemd_start:
 
 override_dh_autoreconf:
 	dh_autoreconf --as-needed
-
-override_dh_installinit:
-	dh_installinit --no-start -- start . 2 3 4 5 . stop . 0 6 .
-	dh_installinit --no-start --name=plymouth-log -- start . S .
 
 override_dh_link:
 	# correcting symlink targets
