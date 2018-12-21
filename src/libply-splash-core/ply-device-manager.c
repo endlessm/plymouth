@@ -974,9 +974,7 @@ ply_device_manager_pause (ply_device_manager_t *manager)
 {
         ply_trace ("ply_device_manager_pause() called, stopping watching for udev events");
         manager->paused = true;
-#ifdef HAVE_UDEV
         stop_watching_for_udev_events (manager);
-#endif
 }
 
 void
@@ -984,11 +982,9 @@ ply_device_manager_unpause (ply_device_manager_t *manager)
 {
         ply_trace ("ply_device_manager_unpause() called, resuming watching for udev events");
         manager->paused = false;
-#ifdef HAVE_UDEV
         if (manager->device_timeout_elapsed) {
                 ply_trace ("ply_device_manager_unpause(): timeout elapsed while paused, looking for udev devices");
                 create_devices_from_udev (manager);
         }
         watch_for_udev_events (manager);
-#endif
 }
