@@ -3,8 +3,7 @@ Section: misc
 Priority: optional
 Maintainer: Laurent Bigonville <bigon@debian.org>
 Uploaders: Sjoerd Simons <sjoerd@debian.org>
-Build-Depends: debhelper (>= 9.20160709~),
-               dh-autoreconf,
+Build-Depends: debhelper-compat (= 12),
                docbook-xsl,
                libdrm-dev,
                libgtk-3-dev (>= 3.14.0),
@@ -14,7 +13,8 @@ Build-Depends: debhelper (>= 9.20160709~),
                pkg-config,
                systemd,
                xsltproc
-Standards-Version: 4.2.1
+Standards-Version: 4.5.0
+Rules-Requires-Root: no
 Homepage: http://www.freedesktop.org/wiki/Software/Plymouth
 Vcs-Git: https://salsa.debian.org/debian/plymouth.git
 Vcs-Browser: https://salsa.debian.org/debian/plymouth
@@ -30,7 +30,9 @@ Depends: init-system-helpers (>= 1.18),
          ${misc:Depends},
          ${shlibs:Depends}
 Conflicts: console-common
-Breaks: plymouth-drm (<< 0.9.0-6~), plymouth-themes (<< 0.9.0-8~)
+Breaks: mawk (<< 1.3.4),
+        plymouth-drm (<< 0.9.0-6~),
+        plymouth-themes (<< 0.9.0-8~)
 Replaces: plymouth-drm (<< 0.9.0-6~), plymouth-themes (<< 0.9.0-8~)
 Suggests: desktop-base, plymouth-themes
 Description: boot animation, logger and I/O multiplexer
@@ -58,7 +60,7 @@ Description: boot animation, logger and I/O multiplexer - X11 renderer
  .
  This package contains the X11 renderer for a graphical boot splash.
 
-Package: libplymouth4
+Package: libplymouth5
 Architecture: any
 Multi-Arch: same
 Section: libs
@@ -77,7 +79,7 @@ Package: libplymouth-dev
 Architecture: any
 Multi-Arch: same
 Section: libdevel
-Depends: libplymouth4 (= ${binary:Version}), ${misc:Depends}, ${shlibs:Depends}
+Depends: libplymouth5 (= ${binary:Version}), ${misc:Depends}, ${shlibs:Depends}
 Breaks: plymouth-dev (<< 0.9.2-1~)
 Replaces: plymouth-dev (<< 0.9.2-1~)
 Description: graphical boot animation and logger - development files
@@ -107,6 +109,7 @@ Package: plymouth-themes
 Architecture: linux-any
 Depends: fontconfig,
          fontconfig-config,
+         fonts-cantarell,
          fonts-dejavu-core | ttf-dejavu-core,
          plymouth (= ${binary:Version}),
          plymouth-label (= ${binary:Version}),
