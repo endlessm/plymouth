@@ -773,14 +773,14 @@ view_start_end_animation (view_t        *view,
         unsigned long screen_width, screen_height;
         long x, y, width, height;
 
-        ply_progress_bar_hide (view->progress_bar);
-        if (view->progress_animation != NULL) {
-                ply_progress_animation_hide (view->progress_animation);
-        }
-        else {
+        if (view->end_animation == NULL) {
                 ply_trigger_pull (trigger, NULL);
                 return;
         }
+
+        ply_progress_bar_hide (view->progress_bar);
+        if (view->progress_animation != NULL)
+                ply_progress_animation_hide (view->progress_animation);
 
         screen_width = ply_pixel_display_get_width (view->display);
         screen_height = ply_pixel_display_get_height (view->display);
