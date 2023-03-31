@@ -1,3 +1,84 @@
+plymouth (22.02.122-4) unstable; urgency=medium
+
+  [ Helmut Grohne ]
+  * Fix FTBFS when systemdsystemunitdir changes in systemd.pc. (Closes:
+    #1052310)
+
+  [ Laurent Bigonville ]
+  * debian/control: Add elogind as an alternative to systemd as elogind
+    package ships the necessesary udev rules files (Closes: #1035076)
+  * debian/local/plymouth.hook: Do not copy the security contexts when
+    building the initramfs (Closes: #1050545)
+  * Update initramfs for all kernel versions when installing or removing
+    plymouth (Closes: #916792)
+  * debian/control: Drop lsb-base, to please lintian
+  * debian/plymouth.links: Fix .service symlink path after move to /usr
+  * debian/rules: Move LSB init-functions file to /usr
+
+ -- Laurent Bigonville <bigon@debian.org>  Sun, 10 Dec 2023 12:00:10 +0100
+
+plymouth (22.02.122-3) unstable; urgency=medium
+
+  [ Debian Janitor ]
+  * Bump debhelper from old 12 to 13.
+    + debian/rules: Drop --fail-missing argument to dh_missing, which is now
+      the default.
+  * Set upstream metadata fields: Repository-Browse.
+  * Update standards version to 4.6.1, no changes needed.
+  * Avoid explicitly specifying -Wl,--as-needed linker flag.
+  * Use secure URI in Homepage field.
+  * Set upstream metadata fields: Repository.
+
+  [ Laurent Bigonville ]
+  * debian/patches/0003-default-theme.patch: Switch to emerald theme by
+    default (Closes: #1029984)
+
+ -- Laurent Bigonville <bigon@debian.org>  Wed, 01 Feb 2023 18:20:20 +0100
+
+plymouth (22.02.122-2) unstable; urgency=medium
+
+  * d/p: Patch the configure.ac to avoid embedding the date in the version.
+    Thanks to Holger Levsen <holger@layer-acht.org> (Closes: #1017372)
+  * debian/plymouth.lintian-overrides: Fix mismatched-override
+
+ -- Laurent Bigonville <bigon@debian.org>  Sun, 25 Sep 2022 10:22:04 +0200
+
+plymouth (22.02.122-1) unstable; urgency=medium
+
+  [ Laurent Bigonville ]
+  * New upstream release, upstream will now release more frequent snapshot
+    releases
+
+  [ Alper Nebi Yasak ]
+  * debian/local/plymouth.hook: Apply module exclusions for MODULES=dep as well
+  * debian/local/plymouth.hook: Add panfrost to excluded DRM modules (Closes:
+    #1007730)
+
+ -- Laurent Bigonville <bigon@debian.org>  Thu, 17 Mar 2022 18:09:27 +0100
+
+plymouth (0.9.5+git20211018-1) unstable; urgency=medium
+
+  * New upstream version 0.9.5+git20211018 (Closes: #967047)
+    - debian/patches/0005-cmdline.patch: Refreshed
+    - debian/plymouth.install: Install plymouthd-fd-escrow executable.
+      Also copy it in the initramfs
+    - debian/libplymouth5.symbols: Add newly exported symbols
+  * debian/control: Bump Standards-Version to 4.6.0 (no further changes)
+
+ -- Laurent Bigonville <bigon@debian.org>  Wed, 10 Nov 2021 16:45:39 +0100
+
+plymouth (0.9.5-3) unstable; urgency=medium
+
+  [ Laurent Bigonville ]
+  * debian/control: Remove dependency the ttf-dejavu-core alternative
+  * Don't use /etc/vconsole.conf after all as it's not used anywhere in debian
+  * d/p/0003-default-theme.patch: Switch to homeworld for bullseye
+
+  [ Simon McVittie ]
+  * Unfuzz 0008-show-delay.patch to apply cleanly
+
+ -- Laurent Bigonville <bigon@debian.org>  Tue, 02 Mar 2021 13:18:12 +0100
+
 plymouth (0.9.5-2) unstable; urgency=medium
 
   * debian/local/plymouth.hook: Copy logo-text-version-64.png in the initramfs
