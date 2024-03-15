@@ -1,6 +1,7 @@
 etc/logrotate.d
 etc/plymouth
 ${env:systemdsystemunitdir}
+lib/systemd/system-shutdown
 usr/bin
 usr/lib/*/plymouth/details.so
 usr/lib/*/plymouth/renderers/drm.so
